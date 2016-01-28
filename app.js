@@ -9,10 +9,30 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var routes = require('./routes/index');
-var users = require('./routes/users');
+// var users = require('./routes/users');
+var settings = require('./settings');//这是新添加了设置文件
+
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
+//这两个是新添加的，用来连接数据库的中间件
+
+
 
 /*这里生成了一个express实例app*/
 var app = express();
+
+app.use(session({
+  secret: settings.cookieSecret,
+  key: settings.db,//cookie name
+  cookie: {maxAge: 1000 * 60 * 60 * 24 * 30},//30 days
+  store: new MongoStore({
+    db: settings.db,
+    host: settings.host,
+    port: settings.port
+  })
+}));
+//使用 express-session 和 connect-mongo 模块实现了将会话信息存储到mongoldb中。
+//secret用来防止篡改cookie，key的值为cookie的名字，通过设置cookie的maxAge值设定cooki的生存期；设置他的store参数为MongoStore实例，把会话信息存储到数据库中，避免丢失。通过req.session来获取当前用户的会话对象，获取用户的相关信息
 
 /*这里是上次在官网学习是的实例bird页面*/
 var birds = require('./birds');
@@ -41,6 +61,8 @@ app.use(cookieParser());
 
 /*这里设置public文件夹为存放静态文件的目录*/
 app.use(express.static(path.join(__dirname, 'public')));
+
+
 
 /*这里指定了三个路由器，遵照N-blog教程，注释掉了下面三行及错误处理路由器，添加了一个总的路由器接口*/
 // app.use('/', routes);
