@@ -12,6 +12,15 @@ var routes = require('./routes/index');
 // var users = require('./routes/users');
 var settings = require('./settings');//这是新添加了设置文件
 
+var flash = require('connect-flash');
+//这个是新添加的flash模块
+/*flash即connect-flash模块，flash是一个在session中用于存储信息的特定区域。信息写入flash，下一次显示完毕后即被清除。典型的应用是结合重定向功能，确保信息是提供给下一个被渲染的页面*/
+//为了避免什么？
+//参阅这里有一个用途的简略说明http://blog.sina.com.cn/s/blog_5dc7d1a40101a88y.html
+//这里是如果没有flash时，自己如何用代码实现flash的功能https://cnodejs.org/topic/50bf03ef637ffa41559a2aea
+//这里是另一个说明https://cnodejs.org/topic/561900a42fb53d5b4f2329f4
+//大概明白了是啥用途
+
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 //这两个是新添加的，用来连接数据库的中间件
@@ -42,6 +51,9 @@ var birds = require('./birds');
 app.set('views', path.join(__dirname, 'views'));
 /*这里设置视图模板引擎为jade*/
 app.set('view engine', 'jade');
+
+app.use(flash());
+//这里是新增connect-flash模块
 
 // uncomment after placing your favicon in /public
 /*这里注释掉的部分使用来设置/public/favicon.ico为favicon图标*/
