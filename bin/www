@@ -1,20 +1,26 @@
 #!/usr/bin/env node
+/*↑ 表明是node可执行文件*/
 
 /**
  * Module dependencies.
  */
-
+/*这里引入我们在app.js中导出的app实例*/
 var app = require('../app');
+/*引入debug模块，打印调试日志*/
 var debug = require('debug')('nodeblog:server');
+/*...*/
 var http = require('http');
 
+
+/*这里设置端口号*/
 /**
  * Get port from environment and store in Express.
  */
-
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
+
+/*↓ 启动工程并监听3000端口，成功后打印Express server listening on port 3000*/
 /**
  * Create HTTP server.
  */
