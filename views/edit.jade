@@ -1,0 +1,11 @@
+extends layout
+
+block content
+	form(method="post", action="/edit/" + post.name + "/" + post.time.day + "/" + post.title)
+		标题：
+		br
+		input(type="text", name="title", value= post.title , disabled="disabled")
+		正文：
+		br
+		textarea(name="post" rows="20" cols="100")= post.post
+		input(type="submit", value="保存修改")

@@ -1,6 +1,13 @@
 extends layout
 
 block content
+	p
+		- if(user && (user.name == post.name)){
+		span
+			a.edit(href="/edit/" + post.name + "/" + post.time.day + "/" + post.title) 编辑
+		span
+			a.edit(href="/remove/" + post.name + "/" + post.time.day + "/" + post.title) 删除
+		-}
 	p.info
 		作者：
 		a(herf="/u/" + post.name)= post.name
