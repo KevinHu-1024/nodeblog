@@ -55,6 +55,11 @@ req.param()： 处理 get 和 post 请求，但查找优先级由高到低为 re
 
 //=========下面是实现N-BLOG教程中的index.js
 
+var crypto = require('crypto'), User = require('../models/user.js');
+//↑这是在实现注册相应部分添加的代码
+//crypto是啥？
+/*通过require引入crypto模块和user.js用户模型文件，crypto是node.js的一个核心模块，我们用它生成散列值来加密密码*/
+
 module.exports = function (app) {
 	app.get('/', function (req, res) {
 		res.render('index', {title: '主页'});
@@ -65,7 +70,52 @@ module.exports = function (app) {
 	});
 	app.post('/reg', function (req, res) {
 		//获取用户注册信息，提交服务器
+		//这里添加了注册响应的代码
+		var name = req.body.name,
+			password = req.body.password,
+			password_re = req.body['password-repeat'];//这里跟上面获取密码写法不一样？
+		if (password_re != password) {
+			req.flash('error', '两次输入的密码不一致！');
+			return res.redirect('reg');
+		}
+
+		var md5 = crypto.createHash('md5'),
+			password = md5.update(req.body.password).digest('hex');
+		var newUser = new User({
+			name: name,
+			password: password,
+			email: req.body.email
+			//为啥email和上面两个写法不一样？
+		});
+
+		//检查用户名是否已经存在
+		User.get(newUser.name, function (err, user) {
+			if (err) {
+				req.flash('error', err);
+				return res.redirect('/');
+			}
+			if (user) {
+				req.flash('error', '用户已存在');
+				return res.redirect('/reg');
+			}
+			newUser.save(function (err, user) {
+				if (err) {
+					req.flash('error', err);
+					return res.redirect('/reg');
+				}
+				req.session.user = newUser;
+				req.flash('success', '注册成功');
+				res.redirect('/');
+			});
+		});
 	});
+	/*注意：我们把用户信息储存在了session里，以后就可以通过req.session.user读取用户信息*/
+
+	/*req.body：就是POST请求信息解析过后的对象，例如我们要访问POST来的表单内的name="password"域的值，只需访问req.body['password']或req.body.password即可。*/
+
+	/*res.redirect：重定向功能，实现了页面跳转。*/
+
+	/*User：在这里，我们直接使用了User对象。User是一个描述数据的对象，及MVC架构中的M模型。前面我们使用了许多试图和控制器，这次是第一次接触模型。模型是真正与数据打交道的工具，是框架总最根本的部分*/
 
 	app.get('/login', function (req, res) {
 		res.render('login', {title: '登录'});
@@ -95,3 +145,9 @@ module.exports = function (app) {
 /*更多知识请参阅MongoDB权威指南*/
 
 //=========安装数据库
+
+//=========在注册响应部分第一次回测数据库时遇到问题
+
+/*问题显示注册后url带着用户名等不消失，页面没有重定向到reg页面，数据库查不到注册记录，数据库终端没有新请求*/
+/*开始排查页面模板是不是有问题，发现在注册表单的模板上，表单属性应该为post，没写。*/
+/*为form添加了post属性，提交正常，然后页面崩溃，提示creatHash Not a function，回去排查路由器index.js发现此函数名字写错，改正之后重启了服务器，注册表单提交，数据库记录添加成功*/
