@@ -4,13 +4,23 @@ html
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
   body
-    header=title
+    header= title
     nav
         span
             a(title="主页", href="/") home
-        span
-            a(title="登陆", href="/login") login
-        span
-            a(title="注册", href="/reg") register
-
+        -if (user)
+            span
+                a(title="发表", href="/post") post
+            span
+                a(title="退出", href="/logout") logout
+        -else
+            span
+                a(title="登录", href="/login") login
+            span
+                a(title="注册", href="/register") register
     block content
+    article
+    -if (success)
+        div= success
+    -if (error)
+        div= error

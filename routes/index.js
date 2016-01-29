@@ -62,12 +62,28 @@ var crypto = require('crypto'), User = require('../models/user.js');
 
 module.exports = function (app) {
 	app.get('/', function (req, res) {
-		res.render('index', {title: '主页'});
-	});
+		res.render('index', {
+		    title: '主页',
+		    user: req.session.user,
+		    success: req.flash('success').toString(),
+		    error: req.flash('error').toString()
+		  });
+		});
 
 	app.get('/reg', function (req, res) {
-		res.render('reg', {title: '注册'});
-	});
+		res.render('reg', {
+		    title: '注册',
+		    user: req.session.user,
+		    success: req.flash('success').toString(),
+		    error: req.flash('error').toString()
+		  });
+		});
+	//解释一下session检测用户装状态的流程
+	/*用户在注册成功之后，把用户信息存入session，页面跳转到主页显示注册成功！字样。同事把session中的用户信息赋给变量user，在渲染index.jade文件时通过检测user来判断用户时候在线，根据用户状态的不同显示不同的导航信息*/
+	/*success: req.flash('success').toString(),的意思是将成功的信息付给变量seccess*/
+	/*error: req.flash('error').toString()，的意思是将错误的信息赋值给变量error，然后我们在渲染jade模板文件时，传递这两个变量进行检测并显示通知
+		 */
+	/*flash中的变量只显示一次，第二次就没有了*/
 	app.post('/reg', function (req, res) {
 		//获取用户注册信息，提交服务器
 		//这里添加了注册响应的代码
@@ -104,7 +120,7 @@ module.exports = function (app) {
 					return res.redirect('/reg');
 				}
 				req.session.user = newUser;
-				req.flash('success', '注册成功');
+				req.flash('success', '注册成功!');
 				res.redirect('/');
 			});
 		});
@@ -118,10 +134,35 @@ module.exports = function (app) {
 	/*User：在这里，我们直接使用了User对象。User是一个描述数据的对象，及MVC架构中的M模型。前面我们使用了许多试图和控制器，这次是第一次接触模型。模型是真正与数据打交道的工具，是框架总最根本的部分*/
 
 	app.get('/login', function (req, res) {
-		res.render('login', {title: '登录'});
+		res.render('login', {
+			title: '登录',
+			user: req.session.user,
+			success: req.flash('success').toString(),
+			error: req.flash('error').toString()
+		});
 	});
 	app.post('/login', function (req, res) {
 		//提交登陆信息到服务器验证
+		var md5 = crypto.createHash('md5'),
+		    password = md5.update(req.body.password).digest('hex');
+		//检查用户是否存在
+		User.get(req.body.name, function (err, user) {
+			if (!user) {
+				req.flash('error', '用户不存在');
+				return res.redirect('/login');
+				//用户不存在则跳转到登录页
+			}
+			// 检查密码是否一致
+			if (user.password != password) {
+				req.flash('error', '密码错误');
+				return res.redirect('/login');
+				//密码错误则跳转到登录页
+			}
+			req.session.user = user;
+			req.flash('success', '登陆成功！');
+			res.redirect('/');
+			// 登陆成功后跳转到首页
+		});
 	});
 
 	app.get('/post', function (req, res) {
@@ -133,6 +174,10 @@ module.exports = function (app) {
 
 	app.get('/logout', function (req, res) {
 		//退出后的提示页
+		req.session.user = null;
+		req.flash('success', '退出成功！');
+		res.redirect('/');
+		//退出成功后跳转到主页
 	});
 };
 /*问题来了，如何针对已登录用户和未登录用户显示不同的内容呢？或者说如何判断用户是否已经登陆了呢？再进一步说如何记录用户的登录状态呢？
