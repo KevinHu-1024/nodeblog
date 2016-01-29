@@ -70,6 +70,7 @@ module.exports = function (app) {
 		  });
 		});
 
+	app.get('/reg', checkNotLogin);
 	app.get('/reg', function (req, res) {
 		res.render('reg', {
 		    title: '注册',
@@ -84,6 +85,7 @@ module.exports = function (app) {
 	/*error: req.flash('error').toString()，的意思是将错误的信息赋值给变量error，然后我们在渲染jade模板文件时，传递这两个变量进行检测并显示通知
 		 */
 	/*flash中的变量只显示一次，第二次就没有了*/
+	app.post('/reg', checkNotLogin);
 	app.post('/reg', function (req, res) {
 		//获取用户注册信息，提交服务器
 		//这里添加了注册响应的代码
@@ -133,6 +135,7 @@ module.exports = function (app) {
 
 	/*User：在这里，我们直接使用了User对象。User是一个描述数据的对象，及MVC架构中的M模型。前面我们使用了许多试图和控制器，这次是第一次接触模型。模型是真正与数据打交道的工具，是框架总最根本的部分*/
 
+	app.get('/login', checkNotLogin);
 	app.get('/login', function (req, res) {
 		res.render('login', {
 			title: '登录',
@@ -141,6 +144,7 @@ module.exports = function (app) {
 			error: req.flash('error').toString()
 		});
 	});
+	app.post('/login', checkNotLogin);
 	app.post('/login', function (req, res) {
 		//提交登陆信息到服务器验证
 		var md5 = crypto.createHash('md5'),
@@ -165,13 +169,16 @@ module.exports = function (app) {
 		});
 	});
 
+	app.get('/post', checkLogin);
 	app.get('/post', function (req, res) {
 		res.render('post', {title: '发表'});
 	});
+	app.post('/post', checkLogin);
 	app.post('/post', function (req, res) {
 		//发表的内容，提交服务器
 	});
 
+	app.get('/logout', checkLogin);
 	app.get('/logout', function (req, res) {
 		//退出后的提示页
 		req.session.user = null;
@@ -196,3 +203,34 @@ module.exports = function (app) {
 /*问题显示注册后url带着用户名等不消失，页面没有重定向到reg页面，数据库查不到注册记录，数据库终端没有新请求*/
 /*开始排查页面模板是不是有问题，发现在注册表单的模板上，表单属性应该为post，没写。*/
 /*为form添加了post属性，提交正常，然后页面崩溃，提示creatHash Not a function，回去排查路由器index.js发现此函数名字写错，改正之后重启了服务器，注册表单提交，数据库记录添加成功*/
+
+//========页面权限控制
+/*我们虽然已经完成了用户注册与登陆功能，但并不能阻止已经登录的用户访问reg页面。因此，我们要为页面设置权限。即注册和登录页应该阻止已经登录的用户访问；而登出及后面要实现的发表页只对已经登录的用户开放。
+
+那么，如何实现页面权限控制呢?
+我们可以把用户登录的状态检查放到路由器中间件总，每个路径前增加路由器中间件，即可实现页面权限控制。
+
+我们添加了checkLogin和checkNotLonging、函数来实现这个功能。*/
+function checkLogin(req, res, next) {
+	if (!req.session.user) {
+		req.flash('error', '未登录');
+		res.redirect('/login');
+	}
+	next();
+}
+
+function checkNotLogin(req, res, next) {
+	if (req.session.user) {
+		req.flash('error', '已登录');
+		res.redirect('back');
+	}
+	next();
+}
+/*这两个函数用来检测是否登录，并通过next来转移控制权，检测到未登录则跳转到登录页，检测到已登录则跳转到前一个页面*/
+
+/*
+注意：为了维护用户状态和 flash 的通知功能，我们给每个 ejs 模版文件传入了以下三个值：
+ */
+/*user: req.session.user,
+success: req.flash('success').toString(),
+error: req.flash('error').toString()*/
