@@ -18,9 +18,9 @@ html
                 a(title="登录", href="/login") login
             span
                 a(title="注册", href="/register") register
-    block content
     article
     -if (success)
         div= success
     -if (error)
         div= error
+    block content
