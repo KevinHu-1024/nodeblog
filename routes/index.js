@@ -203,6 +203,23 @@ module.exports = function (app) {
 		res.redirect('/');
 		//退出成功后跳转到主页
 	});
+
+	app.get('/upload', checkLogin);
+	app.get('/upload', function (req, res) {
+	  res.render('upload', {
+	    title: '文件上传',
+	    user: req.session.user,
+	    success: req.flash('success').toString(),
+	    error: req.flash('error').toString()
+	  });
+	});
+	app.post('/upload', checkLogin);
+	app.post('/upload', function (req, res) {
+	  req.flash('success', '文件上传成功!');
+	  res.redirect('/upload');
+	});
+	//这里是新增的文件上传组件
+	//注意：我们设置 app.get('/upload', checkLogin); 限制只有登陆的用户才能上传文件
 };
 /*问题来了，如何针对已登录用户和未登录用户显示不同的内容呢？或者说如何判断用户是否已经登陆了呢？再进一步说如何记录用户的登录状态呢？
 

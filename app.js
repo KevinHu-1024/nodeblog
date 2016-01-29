@@ -21,6 +21,9 @@ var flash = require('connect-flash');
 //这里是另一个说明https://cnodejs.org/topic/561900a42fb53d5b4f2329f4
 //大概明白了是啥用途
 
+var multer = require('multer');
+//我们使用第三方中间件multer来实现文件上传功能
+
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 //这两个是新添加的，用来连接数据库的中间件
@@ -42,6 +45,18 @@ app.use(session({
 }));
 //使用 express-session 和 connect-mongo 模块实现了将会话信息存储到mongoldb中。
 //secret用来防止篡改cookie，key的值为cookie的名字，通过设置cookie的maxAge值设定cooki的生存期；设置他的store参数为MongoStore实例，把会话信息存储到数据库中，避免丢失。通过req.session来获取当前用户的会话对象，获取用户的相关信息
+
+app.use(multer({
+	dest: './public/images',
+	rename: function (fieldname, filename) {
+		return filename;
+	}
+}));
+/*dest 是上传的文件所在的目录，rename 函数用来修改上传后的文件名，这里设置为保持原来的文件名。*/
+/*根据multer官方api：
+fieldname->Field name specified in the form
+filename->The name of the file within the destination*/
+
 
 /*这里是上次在官网学习是的实例bird页面*/
 var birds = require('./birds');
