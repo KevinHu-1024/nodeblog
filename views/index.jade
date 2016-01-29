@@ -1,4 +1,14 @@
 extends layout
 
 block content
-    这是主页
+    - posts.forEach(function (post, index){
+        p
+            h2
+                a(href="#")= post.title
+        p(class="info")
+            作者：
+            a(href="#")= post.name
+            日期：
+            a= post.time.minute
+        p= post.post
+    - })

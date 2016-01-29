@@ -55,20 +55,28 @@ req.param()： 处理 get 和 post 请求，但查找优先级由高到低为 re
 
 //=========下面是实现N-BLOG教程中的index.js
 
-var crypto = require('crypto'), User = require('../models/user.js');
+var crypto = require('crypto'), 
+    User = require('../models/user.js'),
+    Post = require('../models/post.js');
 //↑这是在实现注册相应部分添加的代码
 //crypto是啥？
 /*通过require引入crypto模块和user.js用户模型文件，crypto是node.js的一个核心模块，我们用它生成散列值来加密密码*/
 
 module.exports = function (app) {
 	app.get('/', function (req, res) {
-		res.render('index', {
-		    title: '主页',
-		    user: req.session.user,
-		    success: req.flash('success').toString(),
-		    error: req.flash('error').toString()
-		  });
-		});
+	  Post.get(null, function (err, posts) {
+	    if (err) {
+	      posts = [];
+	    } 
+	    res.render('index', {
+	      title: '主页',
+	      user: req.session.user,
+	      posts: posts,
+	      success: req.flash('success').toString(),
+	      error: req.flash('error').toString()
+	    });
+	  });
+	});
 
 	app.get('/reg', checkNotLogin);
 	app.get('/reg', function (req, res) {
@@ -175,7 +183,16 @@ module.exports = function (app) {
 	});
 	app.post('/post', checkLogin);
 	app.post('/post', function (req, res) {
-		//发表的内容，提交服务器
+	  var currentUser = req.session.user,
+	      post = new Post(currentUser.name, req.body.title, req.body.post);
+	  post.save(function (err) {
+	    if (err) {
+	      req.flash('error', err); 
+	      return res.redirect('/');
+	    }
+	    req.flash('success', '发布成功!');
+	    res.redirect('/');//发表成功跳转到主页
+	  });
 	});
 
 	app.get('/logout', checkLogin);
@@ -234,3 +251,5 @@ function checkNotLogin(req, res, next) {
 /*user: req.session.user,
 success: req.flash('success').toString(),
 error: req.flash('error').toString()*/
+
+//========发表相应
